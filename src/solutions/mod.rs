@@ -1,5 +1,6 @@
 use anyhow::Result;
 mod day1;
+mod day2;
 
 pub trait Solve {
     fn parse_input(&mut self);
@@ -10,6 +11,7 @@ pub trait Solve {
 pub fn load(day: usize) -> Result<Box<dyn Solve>> {
     match day {
         1 => Ok(Box::new(day1::Solution::new())),
+        2 => Ok(Box::new(day2::Solution::new())),
         _ => anyhow::bail!("invalid advent of code day supplied: {day}"),
     }
 }
