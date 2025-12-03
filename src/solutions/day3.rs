@@ -2,7 +2,7 @@ use super::Solve;
 
 #[derive(Default)]
 pub struct Solution {
-    inputs: Vec<Vec<char>>,
+    inputs: Vec<Vec<u8>>,
 }
 
 impl Solution {
@@ -19,7 +19,11 @@ impl Solve for Solution {
         self.inputs = content
             .trim()
             .split('\n')
-            .map(|line| line.chars().collect())
+            .map(|line| {
+                line.chars()
+                    .map(|c| c.to_string().parse::<u8>().unwrap())
+                    .collect()
+            })
             .collect();
     }
 
@@ -30,19 +34,22 @@ impl Solve for Solution {
             .map(|input| {
                 let max = input.iter().max().unwrap();
                 let idx = input.iter().position(|c| c == max).unwrap();
-                let (left, mut right) = input.split_at(idx);
-                let max = right[0];
-                if right.len() == 1 {
-                    let other = left.iter().max().unwrap();
-                    let idx = left.iter().position(|c| c == other).unwrap();
-                    let next = left[idx];
-                    format!("{next}{max}").parse::<usize>().unwrap()
+                let val = input[idx];
+
+                let (slice, rev) = if idx == input.len() - 1 {
+                    (&input[..idx], true)
                 } else {
-                    right = &right[1..];
-                    let other = right.iter().max().unwrap();
-                    let idx = right.iter().position(|c| c == other).unwrap();
-                    let next = right[idx];
-                    format!("{max}{next}").parse::<usize>().unwrap()
+                    (&input[idx + 1..], false)
+                };
+
+                let max = slice.iter().max().unwrap();
+                let idx = slice.iter().position(|c| c == max).unwrap();
+                let next = slice[idx];
+
+                if rev {
+                    format!("{next}{val}").parse::<usize>().unwrap()
+                } else {
+                    format!("{val}{next}").parse::<usize>().unwrap()
                 }
             })
             .sum::<usize>();
@@ -50,5 +57,10 @@ impl Solve for Solution {
         println!("Part 1: {total}");
     }
 
-    fn part2(&mut self) {}
+    fn part2(&mut self) {
+        let mut total = 0;
+        for input in self.inputs.iter() {}
+
+        println!("Part 2: {total}");
+    }
 }
