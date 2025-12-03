@@ -66,32 +66,17 @@ impl Solve for Solution {
                         start += 10;
                     }
                 } else {
-                    let n = start.to_string();
-                    let limit = n.len() / 2;
-                    for i in 0..=limit {
-                        let first: String = n.chars().take(i).collect();
-                        let mut second: String = n.chars().skip(i).take(n.len() - i).collect();
+                    let s = start.to_string();
+
+                    for i in 0..=s.len() / 2 {
+                        let first: String = s.chars().take(i).collect();
+                        let mut second: String = s.chars().skip(i).take(s.len() - i).collect();
                         second = second.replace(&first, "");
                         if second.is_empty() {
                             total += start;
                             break;
                         }
                     }
-                    // let digits = start.to_string().chars().collect::<Vec<char>>();
-                    // for i in 0..digits.len() / 2 {
-                    //     let ch = &digits[0..=i];
-                    //     let slice = ch
-                    //         .iter()
-                    //         .cycle()
-                    //         .take(digits.len())
-                    //         .copied()
-                    //         .collect::<Vec<char>>();
-                    //     if slice == digits {
-                    //         total += start;
-                    //         break;
-                    //     }
-                    // }
-                    // println!("{start} {digits:?}");
                 }
 
                 start += 1;
