@@ -11,6 +11,8 @@ const CARDINALS: [(isize, isize); 8] = [
     (1, 1),
 ];
 
+const MAX_ROLLS: usize = 4;
+
 #[derive(Default)]
 pub struct Solution {
     paper: Vec<Vec<u8>>,
@@ -55,7 +57,7 @@ impl Solve for Solution {
                     }
                 }
 
-                if count < 4 {
+                if count < MAX_ROLLS {
                     total += 1;
                 }
             }
@@ -94,7 +96,7 @@ impl Solve for Solution {
                         }
                     }
 
-                    if count < 4 {
+                    if count < MAX_ROLLS {
                         total += 1;
                         removed += 1;
                         marked.push((x, y));
