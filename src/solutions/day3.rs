@@ -31,36 +31,41 @@ impl Solve for Solution {
         let total = self
             .inputs
             .iter()
-            .map(|input| {
-                let max = input.iter().max().unwrap();
-                let idx = input.iter().position(|c| c == max).unwrap();
-                let val = input[idx];
-
-                let (slice, rev) = if idx == input.len() - 1 {
-                    (&input[..idx], true)
-                } else {
-                    (&input[idx + 1..], false)
-                };
-
-                let max = slice.iter().max().unwrap();
-                let idx = slice.iter().position(|c| c == max).unwrap();
-                let next = slice[idx];
-
-                if rev {
-                    format!("{next}{val}").parse::<usize>().unwrap()
-                } else {
-                    format!("{val}{next}").parse::<usize>().unwrap()
-                }
-            })
+            .map(|input| largest_joltage(input, 0, 0, 2))
             .sum::<usize>();
 
         println!("Part 1: {total}");
     }
 
     fn part2(&mut self) {
-        let mut total = 0;
-        for input in self.inputs.iter() {}
+        let total = self
+            .inputs
+            .iter()
+            .map(|input| largest_joltage(input, 0, 0, 12))
+            .sum::<usize>();
 
         println!("Part 2: {total}");
     }
+}
+
+fn largest_joltage(input: &[u8], idx: usize, total: usize, size: usize) -> usize {
+    if size == 0 {
+        return total;
+    }
+
+    let len = input.len();
+    let mut largest = idx;
+
+    for i in idx..=(len - size) {
+        if input[i] > input[largest] {
+            largest = i;
+        }
+    }
+
+    largest_joltage(
+        input,
+        largest + 1,
+        total * 10 + input[largest] as usize,
+        size - 1,
+    )
 }
