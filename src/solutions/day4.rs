@@ -1,17 +1,19 @@
-use std::collections::HashSet;
-
 use super::Solve;
 
-#[derive(PartialEq)]
-enum Roll {
-    Empty,
-    Full,
-}
+const CARDINALS: [(isize, isize); 8] = [
+    (-1, -1),
+    (-1, 0),
+    (-1, 1),
+    (0, -1),
+    (0, 1),
+    (1, -1),
+    (1, 0),
+    (1, 1),
+];
 
 #[derive(Default)]
 pub struct Solution {
-    width: usize,
-    paper: Vec<Roll>,
+    paper: Vec<Vec<u8>>,
 }
 
 impl Solution {
@@ -20,72 +22,42 @@ impl Solution {
         s.parse_input();
         s
     }
-
-    fn dist(&self, idx: isize) -> (isize, isize) {
-        (idx / self.width as isize, idx % self.width as isize)
-    }
-
-    pub fn positions(&self, idx: isize) -> Vec<isize> {
-        let mut out = Vec::with_capacity(8);
-        let (curr_row, curr_col) = self.dist(idx);
-        for i in [idx - self.width as isize, idx, idx + self.width as isize] {
-            for j in -1isize..=1 {
-                let (other_row, other_col) = self.dist(i + j);
-                let dist = curr_row.abs_diff(other_row) + curr_col.abs_diff(other_col);
-                if dist <= 2 && i + j != idx {
-                    out.push(i + j);
-                }
-            }
-        }
-
-        out
-    }
-
-    pub fn indices(&self) -> HashSet<isize> {
-        self.paper
-            .iter()
-            .enumerate()
-            .filter_map(|(idx, paper)| {
-                if *paper == Roll::Full {
-                    Some(idx as isize)
-                } else {
-                    None
-                }
-            })
-            .collect::<HashSet<isize>>()
-    }
 }
 
 impl Solve for Solution {
     fn parse_input(&mut self) {
-        let input = std::fs::read("./inputs/day4.txt").expect("this exists");
-        self.width = input
-            .iter()
-            .position(|b| *b == b'\n')
-            .expect("file is guaranteed to have new lines");
-
-        self.paper = input
-            .into_iter()
-            .filter_map(|b| match b {
-                b'.' => Some(Roll::Empty),
-                b'@' => Some(Roll::Full),
-                _ => None,
-            })
-            .collect();
+        let input = std::fs::read_to_string("./inputs/day4.txt").expect("this exists");
+        for line in input.lines() {
+            self.paper.push(line.as_bytes().to_vec());
+        }
     }
 
     fn part1(&mut self) {
         let mut total = 0;
-        let indices = self.indices();
-        for item in indices.iter() {
-            let positions = self.positions(*item);
-            let count = positions
-                .into_iter()
-                .filter(|p| indices.contains(&p))
-                .count();
+        for (x, row) in self.paper.iter().enumerate() {
+            for (y, col) in row.iter().enumerate() {
+                let mut count = 0;
+                if *col != b'@' {
+                    continue;
+                }
 
-            if count < 4 {
-                total += 1;
+                for c in CARDINALS {
+                    let c_x = x as isize + c.0;
+                    let c_y = y as isize + c.1;
+                    if (c_x < 0 || c_x >= self.paper.len() as isize)
+                        || (c_y < 0 || c_y >= row.len() as isize)
+                    {
+                        continue;
+                    }
+
+                    if self.paper[c_x as usize][c_y as usize] == b'@' {
+                        count += 1;
+                    }
+                }
+
+                if count < 4 {
+                    total += 1;
+                }
             }
         }
 
@@ -94,26 +66,47 @@ impl Solve for Solution {
 
     fn part2(&mut self) {
         let mut total = 0;
+        let total_len = self.paper.len();
 
         loop {
-            let mut found = 0;
-            let indices = self.indices();
-            for item in indices.iter() {
-                let positions = self.positions(*item);
-                let count = positions
-                    .into_iter()
-                    .filter(|p| indices.contains(&p))
-                    .count();
+            let mut removed = 0;
+            let mut marked = Vec::new();
+            for (x, row) in self.paper.iter().enumerate() {
+                let row_len = row.len();
+                for (y, col) in row.iter().enumerate() {
+                    let mut count = 0;
+                    if *col != b'@' {
+                        continue;
+                    }
 
-                if count < 4 {
-                    found += 1;
-                    self.paper[*item as usize] = Roll::Empty;
+                    for c in CARDINALS {
+                        let c_x = x as isize + c.0;
+                        let c_y = y as isize + c.1;
+                        if (c_x < 0 || c_x >= total_len as isize)
+                            || (c_y < 0 || c_y >= row_len as isize)
+                        {
+                            continue;
+                        }
+
+                        let target = self.paper[c_x as usize][c_y as usize];
+                        if target == b'@' {
+                            count += 1;
+                        }
+                    }
+
+                    if count < 4 {
+                        total += 1;
+                        removed += 1;
+                        marked.push((x, y));
+                    }
                 }
             }
 
-            if found != 0 {
-                total += found;
-            } else {
+            for (x, y) in marked {
+                self.paper[x][y] = b'.';
+            }
+
+            if removed == 0 {
                 break;
             }
         }
