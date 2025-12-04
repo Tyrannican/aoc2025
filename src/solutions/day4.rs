@@ -20,7 +20,6 @@ impl std::fmt::Display for Roll {
 #[derive(Default)]
 pub struct Solution {
     width: usize,
-    height: usize,
     paper: Vec<Roll>,
 }
 
@@ -79,10 +78,7 @@ impl Solve for Solution {
             .filter_map(|b| match b {
                 b'.' => Some(Roll::Empty),
                 b'@' => Some(Roll::Full),
-                _ => {
-                    self.height += 1;
-                    None
-                }
+                _ => None,
             })
             .collect();
     }
