@@ -33,6 +33,7 @@ impl Solve for Solution {
             })
             .collect();
 
+        self.ranges.sort_by_key(|r| r.0);
         self.ids = ids
             .trim()
             .split('\n')
@@ -54,5 +55,25 @@ impl Solve for Solution {
         println!("Part 1: {total}");
     }
 
-    fn part2(&mut self) {}
+    fn part2(&mut self) {
+        let mut output = Vec::new();
+        let (mut start, mut end) = self.ranges[0];
+
+        for &(n_start, n_end) in self.ranges.iter().skip(1) {
+            if n_start <= end + 1 {
+                end = end.max(n_end);
+            } else {
+                output.push((start, end));
+                (start, end) = (n_start, n_end)
+            }
+        }
+
+        output.push((start, end));
+        let total = output
+            .into_iter()
+            .map(|(s, e)| s.abs_diff(e) + 1)
+            .sum::<usize>();
+
+        println!("Part 2: {total}");
+    }
 }
