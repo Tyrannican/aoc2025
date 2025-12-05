@@ -56,24 +56,19 @@ impl Solve for Solution {
     }
 
     fn part2(&mut self) {
-        let mut output = Vec::new();
+        let mut total = 0;
         let (mut start, mut end) = self.ranges[0];
 
         for &(n_start, n_end) in self.ranges.iter().skip(1) {
             if n_start <= end + 1 {
                 end = end.max(n_end);
             } else {
-                output.push((start, end));
+                total += (start.abs_diff(end)) + 1;
                 (start, end) = (n_start, n_end)
             }
         }
 
-        output.push((start, end));
-        let total = output
-            .into_iter()
-            .map(|(s, e)| s.abs_diff(e) + 1)
-            .sum::<usize>();
-
+        total += (start.abs_diff(end)) + 1;
         println!("Part 2: {total}");
     }
 }
