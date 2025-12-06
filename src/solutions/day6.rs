@@ -83,7 +83,6 @@ impl Solve for Solution {
                 _ => panic!("ahh"),
             };
 
-            println!("Values: {values:?} Op: {op:?} - Result: {value}");
             total += value;
         }
 
