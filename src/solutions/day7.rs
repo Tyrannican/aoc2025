@@ -4,9 +4,9 @@ type Pos = (usize, usize);
 
 #[derive(Default)]
 pub struct Solution {
-    depth: usize,
     start: Pos,
     splits: usize,
+    splitters: Vec<Pos>,
 }
 
 impl Solution {
@@ -20,8 +20,8 @@ impl Solution {
 impl Solve for Solution {
     fn parse_input(&mut self) {
         let content = std::fs::read_to_string("./inputs/day7.txt").expect("it's fine");
-        let mut count = 0;
-        let mut lanes = [0_u8; 256];
+        let mut splits = 0;
+        let mut lanes = [false; 256];
         let _ = content
             .split("\n")
             .enumerate()
@@ -29,39 +29,40 @@ impl Solve for Solution {
                 for (y, ch) in line.as_bytes().iter().enumerate() {
                     match *ch {
                         b'S' => {
-                            lanes[y] = 1;
+                            lanes[y] = true;
                             self.start = (x, y);
                         }
                         b'^' => {
-                            if lanes[y] == 0 {
+                            if !lanes[y] {
                                 continue;
                             }
 
-                            if lanes[y - 1] == 0 {
-                                lanes[y - 1] = 1;
+                            lanes[y] = false;
+                            if !lanes[y - 1] {
+                                lanes[y - 1] = true;
                             }
 
-                            if lanes[y + 1] == 0 {
-                                lanes[y + 1] = 1;
+                            if !lanes[y + 1] {
+                                lanes[y + 1] = true;
                             }
 
-                            lanes[y] = 0;
-                            count += 1;
+                            splits += 1;
+                            self.splitters.push((x, y));
                         }
                         _ => {}
                     }
                 }
-
-                self.depth += 1;
             })
             .collect::<Vec<_>>();
 
-        self.splits = count;
+        self.splits = splits;
     }
 
     fn part1(&mut self) {
         println!("Part 1: {}", self.splits);
     }
 
-    fn part2(&mut self) {}
+    fn part2(&mut self) {
+        println!("Splitters: {:?}", self.splitters);
+    }
 }
