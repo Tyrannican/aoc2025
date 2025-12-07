@@ -1,4 +1,5 @@
 use super::Solve;
+use std::collections::{HashMap, HashSet};
 
 type Pos = (usize, usize);
 
@@ -6,7 +7,8 @@ type Pos = (usize, usize);
 pub struct Solution {
     start: Pos,
     splits: usize,
-    splitters: Vec<Pos>,
+    splitters: HashSet<Pos>,
+    depth: usize,
 }
 
 impl Solution {
@@ -14,6 +16,34 @@ impl Solution {
         let mut s = Solution::default();
         s.parse_input();
         s
+    }
+
+    fn meets_splitter(&self, beam: Pos) -> Option<(Pos, Pos)> {
+        let (mut x, y) = beam;
+        while x < self.depth {
+            if !self.splitters.contains(&(x + 1, y)) {
+                x += 1;
+            } else {
+                return Some(((x, y - 1), (x, y + 1)));
+            }
+        }
+
+        None
+    }
+
+    fn timelines(&self, beam: Pos, cache: &mut HashMap<Pos, usize>) -> usize {
+        if let Some(&cached) = cache.get(&beam) {
+            return cached;
+        }
+
+        let result = match self.meets_splitter(beam) {
+            Some((left, right)) => self.timelines(left, cache) + self.timelines(right, cache),
+            None => 1,
+        };
+
+        cache.insert(beam, result);
+
+        result
     }
 }
 
@@ -47,11 +77,13 @@ impl Solve for Solution {
                             }
 
                             splits += 1;
-                            self.splitters.push((x, y));
+                            self.splitters.insert((x, y));
                         }
                         _ => {}
                     }
                 }
+
+                self.depth += 1;
             })
             .collect::<Vec<_>>();
 
@@ -63,6 +95,8 @@ impl Solve for Solution {
     }
 
     fn part2(&mut self) {
-        println!("Splitters: {:?}", self.splitters);
+        let mut cache = HashMap::new();
+        let result = self.timelines(self.start, &mut cache);
+        println!("Part 2: {result}");
     }
 }
