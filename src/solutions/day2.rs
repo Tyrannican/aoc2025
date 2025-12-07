@@ -64,13 +64,12 @@ impl Solve for Solution {
                         start += 10;
                     }
                 } else {
-                    let s = start.to_string();
-
-                    for i in 0..=s.len() / 2 {
-                        let first: String = s.chars().take(i).collect();
-                        let mut second: String = s.chars().skip(i).take(s.len() - i).collect();
-                        second = second.replace(&first, "");
-                        if second.is_empty() {
+                    let s = start.to_string().into_bytes();
+                    let len = s.len();
+                    for i in 1..=len / 2 {
+                        let first = &s[..i];
+                        let second = &s[i..];
+                        if second.chunks(first.len()).all(|chunk| first == chunk) {
                             total += start;
                             break;
                         }
