@@ -4,6 +4,7 @@ mod day3;
 mod day4;
 mod day5;
 mod day6;
+mod day7;
 
 pub trait Solve {
     fn parse_input(&mut self);
@@ -19,6 +20,7 @@ pub fn load(day: usize) -> Box<dyn Solve> {
         4 => Box::new(day4::Solution::new()),
         5 => Box::new(day5::Solution::new()),
         6 => Box::new(day6::Solution::new()),
+        7 => Box::new(day7::Solution::new()),
         _ => panic!("invalid advent of code day supplied: {day}"),
     }
 }
