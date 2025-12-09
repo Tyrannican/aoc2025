@@ -2,7 +2,8 @@ use std::collections::{HashMap, HashSet};
 
 use super::Solve;
 
-const DEBUG: bool = false;
+type BoxMap = HashMap<Point, Vec<Point>>;
+type PointWeight = ((Point, Point), usize);
 
 #[derive(Default, Clone, Copy, Hash, PartialEq, Eq)]
 struct Point {
@@ -21,23 +22,10 @@ impl Point {
     }
 }
 
-// TODO: Remove when done
-impl std::fmt::Display for Point {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Point(x={},y={},z={})", self.x, self.y, self.z)
-    }
-}
-
-// TODO: Remove when done
-impl std::fmt::Debug for Point {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Point(x={},y={},z={})", self.x, self.y, self.z)
-    }
-}
-
 #[derive(Default)]
 pub struct Solution {
-    junctions: Vec<((Point, Point), usize)>,
+    total: usize,
+    junctions: Vec<PointWeight>,
 }
 
 impl Solution {
@@ -50,13 +38,7 @@ impl Solution {
 
 impl Solve for Solution {
     fn parse_input(&mut self) {
-        let path = if DEBUG {
-            "./inputs/day8_debug.txt"
-        } else {
-            "./inputs/day8.txt"
-        };
-
-        let content = std::fs::read_to_string(path).expect("it exists");
+        let content = std::fs::read_to_string("./inputs/day8.txt").expect("it exists");
         let junctions: Vec<Point> = content
             .trim()
             .split("\n")
@@ -80,6 +62,8 @@ impl Solve for Solution {
             })
             .collect();
 
+        self.total = junctions.len();
+
         self.junctions = junctions
             .iter()
             .enumerate()
@@ -88,63 +72,97 @@ impl Solve for Solution {
                     .iter()
                     .enumerate()
                     .map(|(_, pt2)| ((*pt1, *pt2), pt1.dist(pt2)))
-                    .collect::<Vec<((Point, Point), usize)>>()
+                    .collect::<Vec<PointWeight>>()
             })
             .flatten()
             .collect();
 
         self.junctions.sort_by(|a, b| a.1.cmp(&b.1));
-
-        // TODO: Global Adj Matrix?
     }
 
     fn part1(&mut self) {
-        let size = if DEBUG { 10 } else { 1000 };
-        let mut matrix: HashMap<Point, Vec<(Point, usize)>> = HashMap::new();
-        let shortest: Vec<((Point, Point), usize)> =
-            self.junctions[..size].into_iter().map(|p| *p).collect();
+        let size = 1000;
+        let mut box_map: BoxMap = HashMap::new();
 
-        for ((pt1, pt2), weight) in shortest {
-            matrix
-                .entry(pt1)
-                .and_modify(|v| {
-                    v.push((pt2, weight));
-                })
-                .or_insert(vec![(pt2, weight)]);
-            matrix
-                .entry(pt2)
-                .and_modify(|v| {
-                    v.push((pt1, weight));
-                })
-                .or_insert(vec![(pt1, weight)]);
+        let shortest: Vec<(Point, Point)> =
+            self.junctions[..size].into_iter().map(|p| p.0).collect();
+
+        for (pt1, pt2) in shortest {
+            join(pt1, pt2, &mut box_map);
         }
 
-        let mut count = HashSet::new();
-        let mut visited = HashSet::new();
-        for k in matrix.keys() {
-            if !visited.contains(k) {
-                dfs(&matrix, &mut visited, *k);
-            }
-            count.insert(visited.len());
-            visited.clear();
-        }
+        let mut circuit_len = count_circuits(&box_map);
+        circuit_len.sort_by(|a, b| b.cmp(&a));
+        let total = circuit_len[..3].iter().product::<usize>();
 
-        let mut counts = Vec::from_iter(count.into_iter());
-        counts.sort_by(|a, b| b.cmp(&a));
-
-        let total = counts[..3].iter().product::<usize>();
         println!("Part 1: {total}");
     }
 
-    fn part2(&mut self) {}
-}
+    fn part2(&mut self) {
+        let mut box_map: BoxMap = HashMap::new();
+        'outer: for ((pt1, pt2), _) in self.junctions.iter() {
+            join(*pt1, *pt2, &mut box_map);
+            let mut stack = vec![*pt1, *pt2];
+            let mut visited = HashSet::new();
+            while !stack.is_empty() {
+                let pt = stack.pop().unwrap();
+                if visited.contains(&pt) {
+                    continue;
+                }
 
-fn dfs(matrix: &HashMap<Point, Vec<(Point, usize)>>, visited: &mut HashSet<Point>, pt: Point) {
-    visited.insert(pt);
-    let value = matrix.get(&pt).unwrap();
-    for (inner_pt, _) in value.into_iter() {
-        if !visited.contains(&inner_pt) {
-            dfs(matrix, visited, *inner_pt);
+                visited.insert(pt);
+                if visited.len() == self.total {
+                    println!("Part 2: {}", pt1.x * pt2.x);
+                    break 'outer;
+                }
+
+                let neighbours = box_map.get(&pt).unwrap();
+                for neighbour in neighbours {
+                    if !visited.contains(neighbour) {
+                        stack.push(*neighbour);
+                    }
+                }
+            }
         }
     }
+}
+
+fn count_circuits(box_map: &BoxMap) -> Vec<usize> {
+    let mut count = HashSet::new();
+    for k in box_map.keys() {
+        let mut stack = vec![*k];
+        let mut visited = HashSet::new();
+        while !stack.is_empty() {
+            let pt = stack.pop().unwrap();
+            if visited.contains(&pt) {
+                continue;
+            }
+
+            visited.insert(pt);
+            let neighbours = box_map.get(&pt).unwrap();
+            for neighbour in neighbours {
+                if !visited.contains(neighbour) {
+                    stack.push(*neighbour);
+                }
+            }
+        }
+        count.insert(visited.len());
+    }
+
+    Vec::from_iter(count.into_iter())
+}
+
+fn join(pt1: Point, pt2: Point, box_map: &mut BoxMap) {
+    box_map
+        .entry(pt1)
+        .and_modify(|v| {
+            v.push(pt2);
+        })
+        .or_insert(vec![pt2]);
+    box_map
+        .entry(pt2)
+        .and_modify(|v| {
+            v.push(pt1);
+        })
+        .or_insert(vec![pt1]);
 }
