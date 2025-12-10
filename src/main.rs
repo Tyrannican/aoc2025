@@ -9,7 +9,6 @@ fn main() {
         return;
     };
     let day = arg.parse().unwrap();
-    // let Ok(day) = args[1].parse() else {};
     let mut soln = load(day);
     soln.part1();
     soln.part2();
