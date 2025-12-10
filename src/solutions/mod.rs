@@ -1,4 +1,5 @@
 mod day1;
+mod day10;
 mod day2;
 mod day3;
 mod day4;
@@ -25,6 +26,7 @@ pub fn load(day: usize) -> Box<dyn Solve> {
         7 => Box::new(day7::Solution::new()),
         8 => Box::new(day8::Solution::new()),
         9 => Box::new(day9::Solution::new()),
+        10 => Box::new(day10::Solution::new()),
         _ => panic!("invalid advent of code day supplied: {day}"),
     }
 }
