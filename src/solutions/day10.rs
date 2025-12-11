@@ -2,26 +2,11 @@ use super::Solve;
 
 const DEBUG: bool = true;
 
-#[derive(Copy, Clone, PartialEq, Debug)]
-enum Light {
-    On,
-    Off,
-}
-
-impl Light {
-    fn switch(&mut self) {
-        match self {
-            Self::On => *self = Self::Off,
-            Self::Off => *self = Self::On,
-        }
-    }
-}
-
 #[derive(Debug, Default)]
 struct Machine {
-    lights: Vec<Light>,
-    config: Vec<Light>,
-    instructions: Vec<Vec<u8>>,
+    state: u16,
+    target: u16,
+    wiring: Vec<u16>,
     joltage: Vec<usize>,
 }
 
@@ -55,36 +40,34 @@ impl Solve for Solution {
                 match bytes[0] {
                     // Lights
                     b'[' => {
-                        let mut configuration = Vec::new();
-                        for ch in bytes.iter() {
+                        let slice = &bytes[1..bytes.len() - 1];
+                        for (i, ch) in slice.iter().rev().enumerate() {
                             match ch {
-                                b'#' => configuration.push(Light::On),
-                                b'.' => configuration.push(Light::Off),
+                                b'#' => {
+                                    machine.target |= 1 << i;
+                                }
                                 _ => {}
                             }
                         }
-
-                        let len = configuration.len();
-                        machine.config = configuration;
-                        machine.lights = vec![Light::Off; len];
                     }
 
                     // Instructions
                     b'(' => {
-                        let mut instructions = Vec::new();
+                        let mut wire: u16 = 0;
                         for ch in bytes.iter() {
                             match ch {
                                 b'0'..=b'9' => {
-                                    instructions.push(ch - b'0');
+                                    let idx = ch - b'0';
+                                    wire |= 1 << idx;
                                 }
                                 _ => {}
                             }
                         }
 
-                        machine.instructions.push(instructions);
+                        machine.wiring.push(wire);
                     }
 
-                    // Joltage
+                    // Joltage -- TODO
                     b'{' => {
                         let mut digit = String::new();
                         for ch in bytes.iter() {
@@ -109,9 +92,12 @@ impl Solve for Solution {
     }
 
     fn part1(&mut self) {
-        for machine in self.machines.iter() {
+        let total = 0;
+        for machine in self.machines.iter_mut() {
             println!("{machine:?}");
         }
+        // let total: usize = self.machines.iter().map(|m| m.fewest_presses()).sum();
+        println!("Part 1: {total}");
     }
 
     fn part2(&mut self) {}
