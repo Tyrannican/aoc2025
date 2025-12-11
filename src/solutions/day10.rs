@@ -1,13 +1,41 @@
+use std::collections::{HashSet, VecDeque};
+
 use super::Solve;
 
-const DEBUG: bool = true;
+const DEBUG: bool = false;
 
 #[derive(Debug, Default)]
 struct Machine {
-    state: u16,
     target: u16,
     wiring: Vec<u16>,
     joltage: Vec<usize>,
+}
+
+impl Machine {
+    pub fn min_presses(&self) -> usize {
+        let mut queue: VecDeque<(u16, usize)> = VecDeque::new();
+        let mut seen = HashSet::new();
+        seen.insert(0);
+        queue.push_back((0, 0));
+
+        while !queue.is_empty() {
+            let (current, steps) = queue.pop_front().unwrap();
+
+            for wire in self.wiring.iter() {
+                let state = current ^ wire;
+                if state == self.target {
+                    return steps + 1;
+                }
+
+                if !seen.contains(&state) {
+                    seen.insert(state);
+                    queue.push_back((state, steps + 1));
+                }
+            }
+        }
+
+        0
+    }
 }
 
 #[derive(Default)]
@@ -41,7 +69,7 @@ impl Solve for Solution {
                     // Lights
                     b'[' => {
                         let slice = &bytes[1..bytes.len() - 1];
-                        for (i, ch) in slice.iter().rev().enumerate() {
+                        for (i, ch) in slice.iter().enumerate() {
                             match ch {
                                 b'#' => {
                                     machine.target |= 1 << i;
@@ -57,8 +85,7 @@ impl Solve for Solution {
                         for ch in bytes.iter() {
                             match ch {
                                 b'0'..=b'9' => {
-                                    let idx = ch - b'0';
-                                    wire |= 1 << idx;
+                                    wire |= 1 << (ch - b'0');
                                 }
                                 _ => {}
                             }
@@ -92,12 +119,8 @@ impl Solve for Solution {
     }
 
     fn part1(&mut self) {
-        let total = 0;
-        for machine in self.machines.iter_mut() {
-            println!("{machine:?}");
-        }
-        // let total: usize = self.machines.iter().map(|m| m.fewest_presses()).sum();
-        println!("Part 1: {total}");
+        let min_steps = self.machines.iter().map(|m| m.min_presses()).sum::<usize>();
+        println!("Part 1: {min_steps}");
     }
 
     fn part2(&mut self) {}
