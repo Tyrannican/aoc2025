@@ -8,7 +8,7 @@ const DEBUG: bool = false;
 struct Machine {
     target: u16,
     wiring: Vec<u16>,
-    joltage: Vec<usize>,
+    joltage: Vec<u16>,
 }
 
 impl Machine {
@@ -36,6 +36,26 @@ impl Machine {
 
         0
     }
+
+    pub fn min_presses_joltage(&self) -> usize {
+        0
+    }
+}
+
+#[inline]
+fn bit_idxs(mut wire: u16) -> Vec<usize> {
+    let mut idxs = Vec::with_capacity(16);
+    while wire != 0 {
+        idxs.push(wire.trailing_zeros() as usize);
+        wire &= wire - 1;
+    }
+    idxs
+}
+
+#[inline]
+fn apply_joltage(wire: u16, joltage: &mut [u16]) {
+    let idxs = bit_idxs(wire);
+    idxs.iter().for_each(|i| joltage[*i] += 1);
 }
 
 #[derive(Default)]
@@ -70,11 +90,8 @@ impl Solve for Solution {
                     b'[' => {
                         let slice = &bytes[1..bytes.len() - 1];
                         for (i, ch) in slice.iter().enumerate() {
-                            match ch {
-                                b'#' => {
-                                    machine.target |= 1 << i;
-                                }
-                                _ => {}
+                            if *ch == b'#' {
+                                machine.target |= 1 << i;
                             }
                         }
                     }
@@ -87,11 +104,12 @@ impl Solve for Solution {
                                 b'0'..=b'9' => {
                                     wire |= 1 << (ch - b'0');
                                 }
+                                b')' => {
+                                    machine.wiring.push(wire);
+                                }
                                 _ => {}
                             }
                         }
-
-                        machine.wiring.push(wire);
                     }
 
                     // Joltage -- TODO
@@ -101,14 +119,16 @@ impl Solve for Solution {
                             match ch {
                                 b'0'..=b'9' => digit.push(*ch as char),
                                 b',' => {
-                                    machine.joltage.push(digit.parse::<usize>().unwrap());
+                                    machine.joltage.push(digit.parse::<u16>().unwrap());
                                     digit.clear();
+                                }
+                                b'}' => {
+                                    machine.joltage.push(digit.parse::<u16>().unwrap());
+                                    machine.joltage.resize(16, 0);
                                 }
                                 _ => {}
                             }
                         }
-
-                        machine.joltage.push(digit.parse::<usize>().unwrap());
                     }
                     _ => unreachable!("this is impossible given the problem input"),
                 }
@@ -123,5 +143,11 @@ impl Solve for Solution {
         println!("Part 1: {min_steps}");
     }
 
-    fn part2(&mut self) {}
+    fn part2(&mut self) {
+        for machine in self.machines.iter() {
+            let total = machine.min_presses_joltage();
+            println!("Total: {total}");
+            break;
+        }
+    }
 }
