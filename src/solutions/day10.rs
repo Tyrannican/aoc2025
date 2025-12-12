@@ -40,6 +40,7 @@ impl Machine {
     }
 }
 
+#[allow(dead_code)]
 #[inline]
 fn bit_idxs(mut wire: u16) -> Vec<usize> {
     let mut idxs = Vec::with_capacity(16);
