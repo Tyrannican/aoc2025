@@ -18,9 +18,7 @@ impl Machine {
         seen.insert(0);
         queue.push_back((0, 0));
 
-        while !queue.is_empty() {
-            let (current, steps) = queue.pop_front().unwrap();
-
+        while let Some((current, steps)) = queue.pop_front() {
             for wire in self.wiring.iter() {
                 let state = current ^ wire;
                 if state == self.target {
@@ -50,12 +48,6 @@ fn bit_idxs(mut wire: u16) -> Vec<usize> {
         wire &= wire - 1;
     }
     idxs
-}
-
-#[inline]
-fn apply_joltage(wire: u16, joltage: &mut [u16]) {
-    let idxs = bit_idxs(wire);
-    idxs.iter().for_each(|i| joltage[*i] += 1);
 }
 
 #[derive(Default)]
@@ -144,10 +136,12 @@ impl Solve for Solution {
     }
 
     fn part2(&mut self) {
-        for machine in self.machines.iter() {
-            let total = machine.min_presses_joltage();
-            println!("Total: {total}");
-            break;
-        }
+        let total = self
+            .machines
+            .iter()
+            .map(|m| m.min_presses_joltage())
+            .sum::<usize>();
+
+        println!("Part 2: {total}");
     }
 }
