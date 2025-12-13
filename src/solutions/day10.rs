@@ -1,3 +1,7 @@
+use good_lp::{
+    Expression, ProblemVariables, Solution as LPSolution, SolverModel, constraint, default_solver,
+    variable,
+};
 use std::collections::{HashSet, VecDeque};
 
 use super::Solve;
@@ -36,7 +40,38 @@ impl Machine {
     }
 
     pub fn min_presses_joltage(&self) -> usize {
-        0
+        let wires = self
+            .wiring
+            .iter()
+            .map(|w| bit_idxs(*w))
+            .collect::<Vec<Vec<usize>>>();
+        let n = self.joltage.len();
+        let m = wires.len();
+
+        let mut vars = ProblemVariables::new();
+        let x: Vec<_> = (0..m)
+            .map(|_| vars.add(variable().integer().min(0)))
+            .collect();
+
+        let obj: Expression = x.iter().copied().sum();
+        let mut problem = vars.minimise(obj).using(default_solver);
+
+        for i in 0..n {
+            let expr: Expression = (0..m)
+                .filter(|&j| wires[j].contains(&i))
+                .map(|j| x[j])
+                .sum();
+
+            problem = problem.with(constraint!(expr == self.joltage[i]));
+        }
+
+        match problem.solve() {
+            Ok(solution) => {
+                let value: f64 = x.iter().map(|&var| solution.value(var)).sum();
+                value.round() as usize
+            }
+            Err(_) => panic!("NO SOLUTION"),
+        }
     }
 }
 
@@ -117,7 +152,6 @@ impl Solve for Solution {
                                 }
                                 b'}' => {
                                     machine.joltage.push(digit.parse::<u16>().unwrap());
-                                    machine.joltage.resize(16, 0);
                                 }
                                 _ => {}
                             }
