@@ -6,8 +6,6 @@ use std::collections::{HashSet, VecDeque};
 
 use super::Solve;
 
-const DEBUG: bool = false;
-
 #[derive(Debug, Default)]
 struct Machine {
     target: u16,
@@ -101,13 +99,7 @@ impl Solution {
 
 impl Solve for Solution {
     fn parse_input(&mut self) {
-        let path = if DEBUG {
-            "./inputs/day10_debug.txt"
-        } else {
-            "./inputs/day10.txt"
-        };
-
-        let content = std::fs::read_to_string(path).expect("it exists");
+        let content = std::fs::read_to_string("./inputs/day10.txt").expect("it exists");
         for line in content.trim().split('\n') {
             let mut machine = Machine::default();
 
