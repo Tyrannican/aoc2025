@@ -81,8 +81,10 @@ impl Solve for Solution {
             if area >= max_area { acc + 1 } else { acc }
         });
 
-        println!("Result: {result}")
+        println!("Part 1: {result}")
     }
 
-    fn part2(&mut self) {}
+    fn part2(&mut self) {
+        println!("Part 2: The North Pole is decorated!");
+    }
 }
